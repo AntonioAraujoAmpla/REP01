@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Damas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .game-title {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .player-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+
+        .player-red .player-indicator {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+        }
+
+        .player-black .player-indicator {
+            background: linear-gradient(45deg, #4a4a4a, #2d2d2d);
+        }
+
+        .current-player {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 2px;
+            background: #8b4513;
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+            margin: 0 auto;
+            max-width: 500px;
+        }
+
+        .square {
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .square.light {
+            background: #f0d9b5;
+        }
+
+        .square.dark {
+            background: #b58863;
+        }
+
+        .square.valid-move {
+            background: #90EE90 !important;
+            box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.5);
+            animation: pulse 1s infinite;
+        }
+
+        .square.selected {
+            background: #FFD700 !important;
+            box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .piece {
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            border: 3px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .piece:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .piece.red {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+        }
+
+        .piece.black {
+            background: linear-gradient(45deg, #4a4a4a, #2d2d2d);
+        }
+
+        .piece.king::before {
+            content: '♔';
+            color: gold;
+            font-size: 1.2em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            font-weight: bold;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-message {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.2em;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rules-info {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .rules-info p {
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 20px;
+            }
+            
+            .game-title {
+                font-size: 2em;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1 class="game-title">🎯 Jogo de Damas</h1>
+        </header>
+
+        <div class="game-info">
+            <div class="player-info player-red" id="player-red">
+                <div class="player-indicator"></div>
+                <span>Jogador Vermelho</span>
+            </div>
+            <div class="player-info player-black" id="player-black">
+                <div class="player-indicator"></div>
+                <span>Jogador Preto</span>
+            </div>
+        </div>
+
+        <div class="rules-info">
+            <p><strong>🎯 Regras Importantes:</strong></p>
+            <p>• Peças podem CAPTURAR em qualquer direção (frente e trás)</p>
+            <p>• CAPTURA É OBRIGATÓRIA quando possível</p>
+            <p>• <strong>DAMA:</strong> pode "voar" através de casas vazias para capturar</p>
+            <p>• <strong>DAMA:</strong> também tem obrigação de capturar quando possível</p>
+            <p>• Capturas múltiplas são obrigatórias</p>
+        </div>
+
+        <div class="board" id="board"></div>
+
+        <div class="game-message" id="game-message">
+            Vez do Jogador Vermelho
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="resetGame()">🔄 Novo Jogo</button>
+        </div>
+    </div>
+
+    <script>
+        class CheckersGame {
+            constructor() {
+                this.board = this.initializeBoard();
+                this.currentPlayer = 'red';
+                this.selectedSquare = null;
+                this.validMoves = [];
+                this.gameOver = false;
+                this.mustCapture = false;
+                this.renderBoard();
+                this.updatePlayerIndicator();
+            }
+
+            initializeBoard() {
+                const board = Array(8).fill(null).map(() => Array(8).fill(null));
+                
+                // Colocar peças pretas (início do jogo)
+                for (let row = 0; row < 3; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        if ((row + col) % 2 === 1) {
+                            board[row][col] = { color: 'black', king: false };
+                        }
+                    }
+                }
+                
+                // Colocar peças vermelhas
+                for (let row = 5; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        if ((row + col) % 2 === 1) {
+                            board[row][col] = { color: 'red', king: false };
+                        }
+                    }
+                }
+                
+                return board;
+            }
+
+            renderBoard() {
+                const boardElement = document.getElementById('board');
+                boardElement.innerHTML = '';
+                
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const square = document.createElement('div');
+                        square.className = `square ${(row + col) % 2 === 0 ? 'light' : 'dark'}`;
+                        square.dataset.row = row;
+                        square.dataset.col = col;
+                        square.addEventListener('click', () => this.handleSquareClick(row, col));
+                        
+                        const piece = this.board[row][col];
+                        if (piece) {
+                            const pieceElement = document.createElement('div');
+                            pieceElement.className = `piece ${piece.color} ${piece.king ? 'king' : ''}`;
+                            square.appendChild(pieceElement);
+                        }
+                        
+                        boardElement.appendChild(square);
+                    }
+                }
+                
+                this.highlightValidMoves();
+            }
+
+            handleSquareClick(row, col) {
+                if (this.gameOver) return;
+                
+                const piece = this.board[row][col];
+                
+                if (this.selectedSquare) {
+                    if (this.isValidMove(this.selectedSquare.row, this.selectedSquare.col, row, col)) {
+                        this.makeMove(this.selectedSquare.row, this.selectedSquare.col, row, col);
+                        this.selectedSquare = null;
+                        this.validMoves = [];
+                        this.renderBoard();
+                        
+                        if (!this.gameOver) {
+                            this.switchPlayer();
+                        }
+                    } else if (piece && piece.color === this.currentPlayer) {
+                        this.selectedSquare = { row, col };
+                        this.calculateValidMoves(row, col);
+                        
+                        if (this.mustCapture && !this.validMoves.some(move => move.capture)) {
+                            this.selectedSquare = null;
+                            this.validMoves = [];
+                            this.updateGameMessage('Você deve capturar uma peça quando possível!');
+                        }
+                        
+                        this.renderBoard();
+                    } else {
+                        this.selectedSquare = null;
+                        this.validMoves = [];
+                        this.renderBoard();
+                    }
+                } else if (piece && piece.color === this.currentPlayer) {
+                    this.selectedSquare = { row, col };
+                    this.calculateValidMoves(row, col);
+                    
+                    if (this.mustCapture && !this.validMoves.some(move => move.capture)) {
+                        this.selectedSquare = null;
+                        this.validMoves = [];
+                        this.updateGameMessage('Você deve capturar uma peça quando possível!');
+                    }
+                    
+                    this.renderBoard();
+                }
+            }
+
+            calculateValidMoves(row, col) {
+                this.validMoves = [];
+                const piece = this.board[row][col];
+                if (!piece) return;
+                
+                let hasCapture = false;
+                
+                if (piece.king) {
+                    hasCapture = this.calculateQueenCaptures(row, col);
+                    
+                    if (!hasCapture && !this.mustCapture) {
+                        this.calculateQueenMoves(row, col);
+                    }
+                } else {
+                    const captureDirections = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+                    
+                    for (const [dr, dc] of captureDirections) {
+                        const jumpRow = row + dr * 2;
+                        const jumpCol = col + dc * 2;
+                        
+                        if (this.isValidCapture(row, col, jumpRow, jumpCol)) {
+                            this.validMoves.push({ row: jumpRow, col: jumpCol, capture: true });
+                            hasCapture = true;
+                        }
+                    }
+                    
+                    if (!hasCapture && !this.mustCapture) {
+                        const moveDirections = piece.color === 'red' ? [[-1, -1], [-1, 1]] : [[1, -1], [1, 1]];
+                        
+                        for (const [dr, dc] of moveDirections) {
+                            const newRow = row + dr;
+                            const newCol = col + dc;
+                            
+                            if (this.isValidPosition(newRow, newCol) && !this.board[newRow][newCol]) {
+                                this.validMoves.push({ row: newRow, col: newCol, capture: false });
+                            }
+                        }
+                    }
+                }
+            }
+
+            calculateQueenCaptures(row, col) {
+                const directions = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+                let hasCapture = false;
+                
+                for (const [dr, dc] of directions) {
+                    let currentRow = row + dr;
+                    let currentCol = col + dc;
+                    let foundOpponent = false;
+                    let opponentRow = -1;
+                    let opponentCol = -1;
+                    
+                    while (this.isValidPosition(currentRow, currentCol)) {
+                        const currentPiece = this.board[currentRow][currentCol];
+                        
+                        if (currentPiece) {
+                            if (!foundOpponent && currentPiece.color !== this.currentPlayer) {
+                                foundOpponent = true;
+                                opponentRow = currentRow;
+                                opponentCol = currentCol;
+                            } else {
+                                break;
+                            }
+                        } else if (foundOpponent) {
+                            this.validMoves.push({ 
+                                row: currentRow, 
+                                col: currentCol, 
+                                capture: true,
+                                capturedRow: opponentRow,
+                                capturedCol: opponentCol
+                            });
+                            hasCapture = true;
+                        }
+                        
+                        currentRow += dr;
+                        currentCol += dc;
+                    }
+                }
+                
+                return hasCapture;
+            }
+
+            calculateQueenMoves(row, col) {
+                const directions = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+                
+                for (const [dr, dc] of directions) {
+                    let currentRow = row + dr;
+                    let currentCol = col + dc;
+                    
+                    while (this.isValidPosition(currentRow, currentCol) && !this.board[currentRow][currentCol]) {
+                        this.validMoves.push({ row: currentRow, col: currentCol, capture: false });
+                        currentRow += dr;
+                        currentCol += dc;
+                    }
+                }
+            }
+
+            isValidMove(fromRow, fromCol, toRow, toCol) {
+                return this.validMoves.some(move => move.row === toRow && move.col === toCol);
+            }
+
+            isValidCapture(fromRow, fromCol, toRow, toCol) {
+                if (!this.isValidPosition(toRow, toCol) || this.board[toRow][toCol]) return false;
+                
+                const middleRow = fromRow + (toRow - fromRow) / 2;
+                const middleCol = fromCol + (toCol - fromCol) / 2;
+                const middlePiece = this.board[middleRow][middleCol];
+                
+                return middlePiece && middlePiece.color !== this.currentPlayer;
+            }
+
+            isValidPosition(row, col) {
+                return row >= 0 && row < 8 && col >= 0 && col < 8;
+            }
+
+            makeMove(fromRow, fromCol, toRow, toCol) {
+                const piece = this.board[fromRow][fromCol];
+                this.board[toRow][toCol] = piece;
+                this.board[fromRow][fromCol] = null;
+                
+                const move = this.validMoves.find(m => m.row === toRow && m.col === toCol);
+                if (move && move.capture) {
+                    if (piece.king && move.capturedRow !== undefined) {
+                        this.board[move.capturedRow][move.capturedCol] = null;
+                    } else {
+                        const middleRow = fromRow + (toRow - fromRow) / 2;
+                        const middleCol = fromCol + (toCol - fromCol) / 2;
+                        this.board[middleRow][middleCol] = null;
+                    }
+                    
+                    this.calculateValidMoves(toRow, toCol);
+                    const additionalCaptures = this.validMoves.filter(move => move.capture);
+                    
+                    if (additionalCaptures.length > 0) {
+                        this.selectedSquare = { row: toRow, col: toCol };
+                        this.validMoves = additionalCaptures;
+                        return;
+                    }
+                }
+                
+                if (!piece.king && ((piece.color === 'red' && toRow === 0) || (piece.color === 'black' && toRow === 7))) {
+                    piece.king = true;
+                }
+                
+                this.checkGameOver();
+            }
+
+            switchPlayer() {
+                this.currentPlayer = this.currentPlayer === 'red' ? 'black' : 'red';
+                this.updatePlayerIndicator();
+                this.updateGameMessage();
+                this.mustCapture = this.hasCaptures();
+            }
+
+            hasCaptures() {
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const piece = this.board[row][col];
+                        if (piece && piece.color === this.currentPlayer) {
+                            if (piece.king) {
+                                if (this.hasQueenCaptures(row, col)) {
+                                    return true;
+                                }
+                            } else {
+                                const captureDirections = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+                                
+                                for (const [dr, dc] of captureDirections) {
+                                    const jumpRow = row + dr * 2;
+                                    const jumpCol = col + dc * 2;
+                                    
+                                    if (this.isValidCapture(row, col, jumpRow, jumpCol)) {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            hasQueenCaptures(row, col) {
+                const directions = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+                
+                for (const [dr, dc] of directions) {
+                    let currentRow = row + dr;
+                    let currentCol = col + dc;
+                    let foundOpponent = false;
+                    
+                    while (this.isValidPosition(currentRow, currentCol)) {
+                        const currentPiece = this.board[currentRow][currentCol];
+                        
+                        if (currentPiece) {
+                            if (!foundOpponent && currentPiece.color !== this.currentPlayer) {
+                                foundOpponent = true;
+                            } else {
+                                break;
+                            }
+                        } else if (foundOpponent) {
+                            return true;
+                        }
+                        
+                        currentRow += dr;
+                        currentCol += dc;
+                    }
+                }
+                
+                return false;
+            }
+
+            checkGameOver() {
+                const redPieces = this.countPieces('red');
+                const blackPieces = this.countPieces('black');
+                
+                if (redPieces === 0) {
+                    this.endGame('Jogador Preto venceu! 🎉');
+                } else if (blackPieces === 0) {
+                    this.endGame('Jogador Vermelho venceu! 🎉');
+                } else if (!this.hasValidMoves()) {
+                    this.endGame(`${this.currentPlayer === 'red' ? 'Jogador Preto' : 'Jogador Vermelho'} venceu! 🎉`);
+                }
+            }
+
+            countPieces(color) {
+                let count = 0;
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        if (this.board[row][col] && this.board[row][col].color === color) {
+                            count++;
+                        }
+                    }
+                }
+                return count;
+            }
+
+            hasValidMoves() {
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const piece = this.board[row][col];
+                        if (piece && piece.color === this.currentPlayer) {
+                            this.calculateValidMoves(row, col);
+                            if (this.validMoves.length > 0) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            endGame(message) {
+                this.gameOver = true;
+                document.getElementById('game-message').textContent = message;
+                document.getElementById('game-message').classList.add('winner');
+            }
+
+            updatePlayerIndicator() {
+                const redPlayer = document.getElementById('player-red');
+                const blackPlayer = document.getElementById('player-black');
+                
+                redPlayer.classList.toggle('current-player', this.currentPlayer === 'red');
+                blackPlayer.classList.toggle('current-player', this.currentPlayer === 'black');
+            }
+
+            updateGameMessage(customMessage = null) {
+                if (!this.gameOver) {
+                    let message;
+                    if (customMessage) {
+                        message = customMessage;
+                    } else if (this.mustCapture) {
+                        message = `${this.currentPlayer === 'red' ? 'Jogador Vermelho' : 'Jogador Preto'} - DEVE CAPTURAR!`;
+                    } else {
+                        message = `Vez do ${this.currentPlayer === 'red' ? 'Jogador Vermelho' : 'Jogador Preto'}`;
+                    }
+                    
+                    document.getElementById('game-message').textContent = message;
+                    document.getElementById('game-message').classList.remove('winner');
+                    
+                    if (this.mustCapture) {
+                        document.getElementById('game-message').style.background = 'linear-gradient(45deg, #ff9800, #f57c00)';
+                        document.getElementById('game-message').style.color = 'white';
+                    } else {
+                        document.getElementById('game-message').style.background = '';
+                        document.getElementById('game-message').style.color = '';
+                    }
+                }
+            }
+
+            highlightValidMoves() {
+                if (this.selectedSquare) {
+                    const selectedElement = document.querySelector(`[data-row="${this.selectedSquare.row}"][data-col="${this.selectedSquare.col}"]`);
+                    if (selectedElement) {
+                        selectedElement.classList.add('selected');
+                    }
+                }
+                
+                this.validMoves.forEach(move => {
+                    const element = document.querySelector(`[data-row="${move.row}"][data-col="${move.col}"]`);
+                    if (element) {
+                        element.classList.add('valid-move');
+                    }
+                });
+            }
+        }
+
+        let game = new CheckersGame();
+
+        function resetGame() {
+            game = new CheckersGame();
+        }
+    </script>
+</body>
+</html>
